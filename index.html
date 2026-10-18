@@ -420,7 +420,7 @@ function buy(item, btn) {
 
 // ---------- 渲染 ----------
 const TEARS = `<svg class="tear" viewBox="0 0 40 40"><path d="M12 4 C5 15 5 23 12 23 C19 23 19 15 12 4Z" fill="#7cc4ff" stroke="#d6168f" stroke-width="1.6"/><path d="M30 16 C25 24 25 29 30 29 C35 29 35 24 30 16Z" fill="#7cc4ff" stroke="#d6168f" stroke-width="1.6"/></svg>`;
-const pigArt = (p, i) => IMG('pig_shop') + (hungry(p) ? TEARS : '');   // 养殖场三只都用商店那只猪
+const pigArt = (p, i) => IMG(['pig_1', 'pig_2', 'pig_shop'][i]) + (hungry(p) ? TEARS : '');   // 猪位①②用猪猪①②，猪位③用商店那只
 
 function renderHeader() {
   if (!holdMoney) shownMoney = S.money;
