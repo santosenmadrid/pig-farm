@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>猪猪养殖场</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#d6168f; --ink2:#ff5a8a; --soft:#ffe3f3; --paper:#fffdfe; --gold:#e8a200; --line:rgba(110,140,200,.32); }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { margin:0; height:100%; background:#e9e4ea; }
+  body { font-family:"ZCOOL KuaiLe","Kaiti SC","STKaiti",cursive,sans-serif; color:var(--ink); user-select:none; -webkit-user-select:none; touch-action:manipulation; }
+
+  /* 笔记本横线纸 */
+  .app { position:fixed; inset:0; max-width:520px; margin:0 auto; display:flex; flex-direction:column; overflow:hidden;
+    background:repeating-linear-gradient(to bottom, transparent 0 27px, var(--line) 27px 28px) #fdfcff; box-shadow:0 0 24px rgba(0,0,0,.15); }
+
+  /* 手绘感边框：每个角的圆角不一样 */
+  .sk  { border:3px solid var(--ink); border-radius:255px 14px 225px 14px / 14px 225px 14px 255px; }
+  .sk2 { border:3px solid var(--ink); border-radius:14px 255px 14px 225px / 225px 14px 255px 14px; }
+  .skb { border:3px solid var(--ink); border-radius:10px 5px 12px 6px / 6px 12px 5px 10px; }
+  .skb2{ border:3px solid var(--ink); border-radius:5px 12px 6px 10px / 12px 5px 10px 6px; }
+
+  .hdr { padding:calc(8px + env(safe-area-inset-top)) 14px 2px; }
+  .hdr .r1 { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .money { background:var(--paper); padding:1px 16px; font-size:22px; }
+  .meta { font-size:13px; text-align:right; line-height:1.25; }
+  .owner { font-size:17px; margin:4px 0 0; display:flex; align-items:center; gap:6px; }
+  .avatar { width:40px; flex:none; }
+  .avatar img { width:100%; display:block; }
+  img { max-width:250px; }
+
+  .pages { flex:1; position:relative; min-height:0; }
+  .page { position:absolute; inset:0; padding:4px 14px 8px; display:none; flex-direction:column; gap:8px; overflow:hidden auto; }
+  .page.active { display:flex; }
+
+  /* 养殖场 */
+  .awning { position:relative; height:62px; flex:none; }
+  .awning svg { position:absolute; inset:0; width:100%; height:100%; }
+  .awning .t { position:absolute; left:50%; top:24%; transform:translateX(-50%); }
+  .awning .t img { height:46px; display:block; }
+  .scene { flex:1; min-height:0; display:grid; grid-template-columns:repeat(3,1fr); gap:0; background:rgba(255,255,255,.55); padding:6px 2px 6px; border-top:0 !important; border-radius:0 0 14px 14px !important; }
+  .pen { display:flex; flex-direction:column; align-items:center; min-width:0; padding:0 5px; border-left:3px solid var(--ink); }
+  .pen:first-child { border-left:0; }
+  .sign { font-size:14px; padding:0 5px; background:var(--paper); white-space:nowrap; }
+  .pigbox { flex:1; width:100%; display:flex; align-items:center; justify-content:center; min-height:0; padding-bottom:4px; margin-bottom:6px; border-bottom:3px dotted rgba(214,22,143,.5); }
+  .pig { position:relative; width:96%; max-width:124px; padding-bottom:42%; text-align:center; cursor:pointer; }
+  .pig img.trough { position:absolute; left:50%; bottom:0; width:78%; transform:translateX(-50%); }
+  .pigwob { position:relative; }
+  .pigwob { transform-origin:50% 100%; animation:sway 2.4s ease-in-out infinite; }
+  .pigwob.sob { animation:sob .7s ease-in-out infinite; filter:saturate(.55) hue-rotate(-10deg); }
+  @keyframes sway { 0%,100% { transform:rotate(-3.5deg) translateX(-3px); } 50% { transform:rotate(3.5deg) translateX(3px); } }
+  @keyframes sob  { 0%,100% { transform:rotate(-1.5deg) translateY(0); } 50% { transform:rotate(1.5deg) translateY(2px); } }
+  .pig img { width:100%; display:block; }
+
+  .tear { position:absolute; right:-8px; top:-2px; width:32px; animation:drip 1s ease-in infinite; }
+  @keyframes drip { 0% { transform:translateY(-3px); } 100% { transform:translateY(3px); } }
+
+  .rare .pigwob { filter:hue-rotate(-60deg) saturate(1.4); }
+  .rare .pigwob.sob { filter:hue-rotate(-60deg) saturate(.8); }
+  .rare-f { filter:hue-rotate(-60deg) saturate(1.4); }
+  .nm { font-size:15px; }
+  .tag { font-size:12px; color:var(--gold); min-height:15px; }
+  .hbar { width:100%; height:14px; background:#fff; overflow:hidden; margin:3px 0 5px; }
+  .hbar i { display:block; height:100%; background:repeating-linear-gradient(135deg, var(--ink) 0 4px, var(--ink2) 4px 8px); transition:width .3s; }
+  .hbar.low i { background:repeating-linear-gradient(135deg, #e11 0 4px, #ff8a8a 4px 8px); }
+  .hlab { font-size:12px; margin:-2px 0 4px; }
+  .empty { opacity:.45; }
+  .lab { height:24px; width:auto; display:block; margin:2px 0; }
+  .dashed { border:3px dashed var(--ink); border-radius:12px; padding:2px 8px; }
+  .farmbar { flex:none; display:flex; gap:8px; align-items:stretch; }
+  .farmbar .stock { display:flex; align-items:center; gap:4px; padding:2px 10px; background:var(--paper); font-size:17px; white-space:nowrap; }
+  .mini { height:30px; }
+  .dev { font-size:12px; text-align:center; opacity:.55; flex:none; }
+  .dev button { font-size:12px; padding:0 8px; border-width:2px; }
+
+  button { font:inherit; color:var(--ink); background:var(--paper); cursor:pointer; padding:3px 10px; }
+  button:active:not(:disabled) { background:var(--soft); transform:scale(.96); }
+  button:disabled { opacity:.45; cursor:not-allowed; border-style:dashed; }
+  .claim { flex:1; font-size:18px; padding:8px 10px; background:var(--soft); }
+  .feedbtn { width:100%; font-size:14px; padding:3px 2px; }
+  .imgbtn { background:none; border:0; padding:0; width:100%; display:block; }
+  .imgbtn img { width:100%; display:block; }
+  .imgbtn.dim { opacity:.4; }
+  .imgbtn:active:not(:disabled) { background:none; }
+  .sellbtn { margin-top:4px; font-size:12px; padding:1px 2px; }
+  .sellbtn.arm { background:var(--ink); color:#fff; }
+
+  /* 商店 */
+  .banner { flex:none; display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:4px; }
+  .banner img.ttl { height:46px; display:block; }
+  .banner img.sale { height:46px; max-width:60%; display:block; }
+
+
+
+  .shop { flex:1; min-height:0; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:12px; }
+  .item { background:rgba(255,255,255,.7); padding:8px 6px; display:flex; flex-direction:column; align-items:center; justify-content:space-between; min-height:0; text-align:center; }
+  .item .art { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; width:100%; }
+  .item .art img { max-height:100%; max-width:80%; object-fit:contain; }
+
+  .old { font-size:14px; text-decoration:line-through; text-decoration-thickness:2px; line-height:1; }
+  .price { font-size:22px; line-height:1.1; }
+  .item .imgbtn { width:62%; margin-top:4px; }
+  .item .owned, .item .soon { font-size:17px; margin-top:6px; }
+  .item .soon { opacity:.5; }
+  .item.mystery { border-style:dashed; }
+
+  /* 猪猪机 */
+  :root { --rail:26px; }
+  .machine { flex:1; min-height:0; display:flex; flex-direction:column; background:rgba(255,255,255,.6); padding:8px; position:relative; }
+  .glass { flex:1; min-height:0; position:relative; border:3px solid var(--ink); border-radius:6px; overflow:hidden; background:rgba(255,236,248,.55); }
+  .rail { position:absolute; left:0; right:0; top:0; height:var(--rail); background:url(assets/machine_spring_top.png) center / 100% 100% no-repeat; }
+  #claw { position:absolute; left:0; top:var(--rail); width:0; will-change:transform; }
+  #claw .ring { position:absolute; left:-26px; top:-36px; width:52px; }
+  #claw .rope { position:absolute; left:-1.5px; top:0; width:3px; background:var(--ink); }
+  #claw .cl { position:absolute; left:-31px; width:62px; clip-path:inset(10% 0 0 0); transform-origin:50% 100%; transition:transform .25s; }
+  #claw.closed .cl { transform:scaleX(.72); }
+  .mpig, .cpig { width:var(--pw); text-align:center; }
+  .mpig { position:absolute; bottom:6px; transform:translateX(-50%); }
+  .cpig { position:fixed; z-index:55; pointer-events:none; }
+  .mpig img, .cpig img { width:100%; display:block; }
+  .mpig .rot { position:relative; }
+  .mpig .a, .mpig .bub { display:none; }
+  .mpig.alert .n { display:none; }
+  .mpig.alert .a { display:block; width:88%; margin:0 auto; }
+  .mpig.alert .rot { transform:none !important; }
+  .mpig.alert .bub { display:block; position:absolute; top:-26%; right:-34%; width:46%; animation:pop .5s ease-in-out infinite alternate; }
+  .mpig.bl.alert .bub { right:auto; left:-34%; }
+  @keyframes pop { from { transform:scale(.9); } to { transform:scale(1.1); } }
+  .ctrl { flex:none; display:flex; align-items:center; gap:8px; padding:6px 4px; border-bottom:3px solid var(--ink); }
+  #knobs { position:relative; width:96px; flex:none; }
+  #knobs img.k { width:100%; display:block; transition:transform .1s, filter .2s; }
+  #knobs.off img.k { filter:grayscale(1) opacity(.5); }
+  #knobs:has(#grab:active) img.k { transform:scale(.94); }
+  #grab { position:absolute; left:0; top:0; width:52%; height:78%; background:transparent !important; border:0; padding:0; transform:none !important; }
+  #knobs .hint { position:absolute; left:34%; top:58%; width:20px; pointer-events:none; animation:tap .9s ease-in-out infinite alternate; }
+  #knobs.off .hint { display:none; }
+  @keyframes tap { from { transform:translate(0,0); } to { transform:translate(5px,6px); } }
+  .ctrl .info { flex:1; font-size:14px; line-height:1.25; text-align:center; }
+  .ctrl .holes { width:66px; flex:none; display:block; }
+  .slot { flex:none; margin-top:8px; display:flex; align-items:center; gap:8px; }
+  .slot .outlet { height:34px; width:auto; }
+  .slot .box { flex:1; height:40px; border:3px solid var(--ink); }
+  .popup { position:absolute; left:50%; top:36%; transform:translate(-50%,-50%) scale(.6); z-index:80; background:var(--paper); padding:10px 28px 12px; text-align:center; font-size:32px; opacity:0; pointer-events:none; transition:all .25s cubic-bezier(.3,1.6,.5,1); white-space:nowrap; }
+  .popup.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  .popup .pp { height:96px; display:flex; justify-content:center; }
+  .popup .pp img { height:100%; width:auto; }
+  .popup .sub { font-size:16px; }
+
+  /* 标签页 */
+  .tabs { flex:none; display:flex; gap:8px; padding:8px 12px calc(8px + env(safe-area-inset-bottom)); background:var(--paper); border-top:3px solid var(--ink); }
+  .tab { flex:1; display:flex; align-items:center; justify-content:center; padding:4px 0; border-color:transparent; background:transparent; }
+  .tab img { height:34px; width:auto; opacity:.55; }
+  .tab.on img { opacity:1; }
+
+  .tab.on { border-color:var(--ink); background:var(--soft); }
+
+  /* 反馈 */
+  #toast { position:fixed; left:50%; top:96px; transform:translateX(-50%); background:var(--ink); color:#fff; padding:6px 18px; border-radius:20px; opacity:0; transition:opacity .2s; pointer-events:none; max-width:90%; text-align:center; z-index:50; }
+  #toast.show { opacity:1; }
+  .float { position:fixed; z-index:60; pointer-events:none; font-size:24px; color:var(--ink); text-shadow:0 0 4px #fff,0 0 4px #fff; transform:translateX(-50%); white-space:nowrap; }
+  .float.neg { color:#555; }
+  .coin { position:fixed; z-index:70; width:24px; height:24px; pointer-events:none; border-radius:50%; background:#ffd34d; border:2.5px solid var(--ink); color:var(--ink); font-size:14px; line-height:19px; text-align:center; }
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="hdr">
+    <div class="r1">
+      <div class="money sk" id="moneyBox">Money: <span id="money"></span>¥</div>
+      <div class="meta">No.001<br>Date <span id="date"></span></div>
+    </div>
+    <div class="owner"><span class="avatar"><img src="assets/farmer_avatar.png" alt=""></span>农场主 <span id="pid"></span> 的养殖场</div>
+  </header>
+
+  <main class="pages">
+    <section class="page active" id="page-farm">
+      <div class="awning">
+        <svg viewBox="0 0 360 62" preserveAspectRatio="none"><path d="M6 58 L44 5 L318 8 L354 60" fill="#ffe3f3" stroke="#d6168f" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M120 8 L112 40 M240 8 L252 40" stroke="#d6168f" stroke-width="3" stroke-linecap="round"/></svg>
+        <div class="t"><img src="assets/title_farm.png" alt="养殖场"></div>
+      </div>
+      <div class="scene sk" id="pens"></div>
+      <div class="farmbar">
+        <button class="claim skb" id="claim"></button>
+        <div class="stock skb2"><img class="mini" src="assets/feed_bag.png" alt=""> × <b id="feed"></b></div>
+      </div>
+      <div class="dev">试玩用：<button class="skb" data-dev="tick">+5分钟</button> <button class="skb" data-dev="day">过一天</button> <button class="skb" data-dev="reset">重新开始</button></div>
+    </section>
+
+    <section class="page" id="page-shop">
+      <div class="banner">
+        <img class="ttl" src="assets/title_shop.png" alt="商店 SHOP">
+        <img class="sale" src="assets/banner_sale.png" alt="限时优惠!!!">
+      </div>
+      <div class="shop" id="shop"></div>
+    </section>
+
+    <section class="page" id="page-machine">
+      <div class="banner"><img class="ttl" src="assets/title_machine.png" alt="猪猪机"><div class="price">¥400 / 次</div></div>
+      <div class="machine sk2" id="machine">
+        <div class="glass" id="glass">
+          <div class="rail"></div>
+          <div id="claw"><img class="ring" src="assets/claw_ring.png" alt=""><div class="rope"></div><img class="cl" src="assets/claw.png" alt=""></div>
+        </div>
+        <div class="ctrl">
+          <div id="knobs"><img class="k" src="assets/machine_knobs.png" alt=""><button id="grab" aria-label="抓"></button><img class="hint" src="assets/cursor.png" alt=""></div>
+          <div class="info" id="mInfo"></div>
+          <img class="holes" src="assets/machine_holes.png" alt="">
+        </div>
+        <div class="slot"><img class="outlet" src="assets/label_outlet.png" alt="出猪口">
+          <div class="box skb" id="slotBox"></div></div>
+        <div class="popup sk" id="popup"></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabs">
+    <button class="tab skb on" data-tab="farm"><img src="assets/title_farm.png" alt="养殖场"></button>
+    <button class="tab skb2" data-tab="shop"><img src="assets/title_shop.png" alt="商店"></button>
+    <button class="tab skb" data-tab="machine"><img src="assets/title_machine.png" alt="猪猪机"></button>
+  </nav>
+</div>
+<div id="toast"></div>
+
+<script>
+const CONFIG = {
+  TICK_MINUTES: 5,          // 每隔多久掉一次饥饿度
+  HUNGER_DROP: 10,          // 每次掉多少 %
+  HUNGRY_BELOW: 30,         // 低于多少 % 变哭脸
+  STARVE_DAYS_PER_TICK: 1,  // 饥饿度为 0 时，每个周期额外扣多少天寿命
+  OFFLINE_TICK_CAP: 24,     // 离线最多按多少个周期结算（24 × 5分钟 = 2 小时）
+  PLAY_COST: 400,           // 猪猪机每次价格
+  CLAW_SWEEP_SECONDS: 2.6,  // 爪子从一端摆到另一端要几秒（越小越快）
+  HIT_RATE: { center: 0.6, near: 0.3, far: 0 }, // 正上方 / 偏一点 / 没对上
+  MACHINE_PIG_WIDTH: 0.2,   // 猪猪机里猪的基准宽度（占玻璃宽的比例，越大越挤、越容易抓）
+  PITY_AFTER: 3,            // 连续没抓到几次后，下一次必中
+  RARE_RATE: 0.2,           // 抓到的猪是稀有猪的概率
+  RARE_LIFE: 730,
+  SELL_PRICE: 249,          // 普通猪卖出价；猪猪机没有空位时也按它自动卖出
+  SELL_PRICE_RARE: 499,     // 稀有猪卖出价
+  FEED_DAYS: 30,            // 喂一次 +天数
+  NORMAL_LIFE: 365,
+  INCOME: { normal: 50, rare: 150 },
+  LOGIN_BONUS: 100,
+  PRICE: { pig: 499, feed: 69, pen: 999 },
+  OLD_PRICE: { pig: 599, feed: 79, pen: 1999 },
+  START_DATE: new Date(2026, 9, 17),
+  ASSET_DIR: 'assets/'       // 素材目录，文件对照见 assets/README.md
+};
+const TICK_MS = CONFIG.TICK_MINUTES * 60000;
+const KEY = 'pig-farm-v2';
+const $ = id => document.getElementById(id);
+
+const realDay = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 6e4) / 864e5);
+const newState = () => ({
+  id: 571608, money: 1259, feed: 0, penUnlocked: false,
+  pigs: [ { life: 709, rare: false, hunger: 100 }, { life: 882, rare: false, hunger: 100 }, null ],
+  missStreak: 0, day: 0, claimedDay: -1, lastRealDay: realDay(), lastTick: Date.now()
+});
+function load() {
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) { s.missStreak ??= 0; return s; } } catch (e) {}
+  return newState();
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+let S = load();
+let shownMoney = S.money, holdMoney = false;
+const IMG = (name, cls = '') =>
+  `<img class="${cls}" src="${CONFIG.ASSET_DIR}${name}.png" alt="" draggable="false" onerror="this.style.visibility='hidden'">`;
+
+// ---------- 反馈 ----------
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+function floatAt(el, text, cls = '') {
+  const r = el.getBoundingClientRect();
+  const f = document.createElement('div');
+  f.className = 'float ' + cls; f.textContent = text;
+  f.style.left = (r.left + r.width / 2) + 'px'; f.style.top = (r.top + r.height * .2) + 'px';
+  document.body.appendChild(f);
+  f.animate([{ transform:'translate(-50%,0) scale(.8)', opacity:0 }, { transform:'translate(-50%,-18px) scale(1.15)', opacity:1, offset:.25 },
+             { transform:'translate(-50%,-64px) scale(1)', opacity:0 }], { duration:1100, easing:'ease-out' }).onfinish = () => f.remove();
+}
+function jump(el) {
+  el.animate([{ transform:'translateY(0) scale(1,1)' }, { transform:'translateY(0) scale(1.15,.85)', offset:.15 },
+              { transform:'translateY(-34px) scale(.92,1.1)', offset:.5 }, { transform:'translateY(0) scale(1.12,.88)', offset:.85 },
+              { transform:'none' }], { duration:480, easing:'ease-out' });
+}
+function shake(el) {
+  el.animate([{ transform:'translateX(0)' }, { transform:'translateX(-6px)' }, { transform:'translateX(6px)' },
+              { transform:'translateX(-4px)' }, { transform:'translateX(0)' }], { duration:300 });
+}
+function bump(el) { el.animate([{ transform:'scale(1)' }, { transform:'scale(1.25)' }, { transform:'scale(1)' }], { duration:220 }); }
+
+function flyCoins(from, to, n, onLand) {
+  const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+  const sx = a.left + a.width / 2 - 12, sy = a.top + a.height / 2 - 12;
+  const dx = b.left + b.width / 2 - 12 - sx, dy = b.top + b.height / 2 - 12 - sy;
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('div');
+    c.className = 'coin'; c.style.left = sx + 'px'; c.style.top = sy + 'px';
+    c.textContent = '¥';
+    document.body.appendChild(c);
+    const jx = (Math.random() - .5) * 120;
+    c.animate([{ transform:'translate(0,0) scale(1)', opacity:1 },
+               { transform:`translate(${dx * .35 + jx}px,${dy * .2 - 50}px) scale(1.3)`, offset:.4 },
+               { transform:`translate(${dx}px,${dy}px) scale(.7)`, opacity:.9 }],
+              { duration:750, delay:i * 70, easing:'ease-in', fill:'backwards' }).onfinish = () => { c.remove(); onLand(); };
+  }
+}
+
+// ---------- 规则 ----------
+const slotsOpen = () => S.penUnlocked ? 3 : 2;
+const hungry = p => p.hunger < CONFIG.HUNGRY_BELOW;
+const incomeToday = () => CONFIG.LOGIN_BONUS + S.pigs.reduce((a, p) => a + (p ? CONFIG.INCOME[p.rare ? 'rare' : 'normal'] : 0), 0);
+const dateStr = () => {
+  const d = new Date(CONFIG.START_DATE.getTime() + S.day * 864e5);
+  return `${String(d.getFullYear()).slice(2)}.${d.getMonth() + 1}.${d.getDate()}`;
+};
+
+function advanceDays(n) {
+  for (let i = 0; i < n; i++) {
+    S.day++;
+    S.pigs = S.pigs.map(p => { if (p) p.life--; return p && p.life > 0 ? p : null; });
+  }
+}
+function catchUpDays() {
+  const n = realDay() - S.lastRealDay;
+  if (n > 0) {
+    const before = S.pigs.filter(Boolean).length;
+    advanceDays(n); S.lastRealDay = realDay();
+    if (before > S.pigs.filter(Boolean).length) toast('有猪猪寿命到了…');
+  }
+}
+
+// 饥饿度：每个周期掉 HUNGER_DROP，归零后开始扣寿命
+function processTicks() {
+  const now = Date.now();
+  let n = Math.floor((now - S.lastTick) / TICK_MS);
+  if (n <= 0) return false;
+  if (n > CONFIG.OFFLINE_TICK_CAP) { n = CONFIG.OFFLINE_TICK_CAP; S.lastTick = now; } else S.lastTick += n * TICK_MS;
+  let cried = false, died = false;
+  for (let t = 0; t < n; t++) {
+    S.pigs = S.pigs.map(p => {
+      if (!p) return p;
+      if (p.hunger > 0) {
+        const was = hungry(p);
+        p.hunger = Math.max(0, p.hunger - CONFIG.HUNGER_DROP);
+        if (!was && hungry(p)) cried = true;
+      } else p.life -= CONFIG.STARVE_DAYS_PER_TICK;
+      if (p.life <= 0) { died = true; return null; }
+      return p;
+    });
+  }
+  if (died) toast('有猪猪饿死了…快去喂食');
+  else if (cried) toast('有猪猪饿哭了');
+  return true;
+}
+
+function claim() {
+  if (S.claimedDay === S.day) return;
+  const g = incomeToday(), N = 8;
+  const before = S.money;
+  S.money += g; S.claimedDay = S.day; save();
+  holdMoney = true; shownMoney = before; render();
+  floatAt($('claim'), `+${g}`);
+  let landed = 0;
+  flyCoins($('claim'), $('moneyBox'), N, () => {
+    landed++;
+    if (landed === N) { holdMoney = false; shownMoney = S.money; } else shownMoney += Math.round(g / N);
+    $('money').textContent = shownMoney; bump($('moneyBox'));
+  });
+}
+
+const sellPrice = p => p.rare ? CONFIG.SELL_PRICE_RARE : CONFIG.SELL_PRICE;
+let sellArm = -1, sellTimer;
+function sellPig(i) {
+  const p = S.pigs[i];
+  if (!p) return;
+  if (sellArm !== i) {                       // 第一次点：进入确认状态，3 秒后自动取消
+    sellArm = i; clearTimeout(sellTimer);
+    sellTimer = setTimeout(() => { sellArm = -1; renderFarm(); }, 3000);
+    return renderFarm();
+  }
+  clearTimeout(sellTimer); sellArm = -1;
+  const price = sellPrice(p), el = document.querySelector(`[data-pig="${i}"]`);
+  floatAt(el, `+${price}`);
+  S.pigs[i] = null; S.money += price; save(); render();
+  bump($('moneyBox')); toast(`卖掉了猪猪 +${price}`);
+}
+
+function feedPig(i, btn) {
+  const p = S.pigs[i];
+  if (!p) return;
+  if (S.feed < 1) { shake(btn); return toast('没有饲料了，去商店买吧'); }
+  S.feed--; p.life += CONFIG.FEED_DAYS; p.hunger = 100;
+  save(); render();
+  const pig = document.querySelector(`[data-pig="${i}"]`);
+  jump(pig); floatAt(pig, `+${CONFIG.FEED_DAYS}天`);
+}
+
+function buy(item, btn) {
+  const cost = CONFIG.PRICE[item];
+  if (S.money < cost) { shake(btn); return toast('金币不足'); }
+  if (item === 'pig') {
+    const slot = S.pigs.findIndex((p, i) => !p && i < slotsOpen());
+    if (slot < 0) { shake(btn); return toast('没有空猪位'); }
+    S.pigs[slot] = { life: CONFIG.NORMAL_LIFE, rare: false, hunger: 100 };
+  } else if (item === 'feed') S.feed++;
+  else if (item === 'pen') { if (S.penUnlocked) return; S.penUnlocked = true; }
+  S.money -= cost; save(); render();
+  floatAt($('moneyBox'), `-${cost}`, 'neg'); bump($('moneyBox'));
+  const card = document.querySelector(`[data-buy="${item}"]`).closest('.item');
+  jump(card);
+  toast(item === 'pig' ? '新猪猪入住了，去养殖场看看' : item === 'feed' ? '饲料 +1' : '猪圈到手，第 3 个猪位解锁');
+}
+
+// ---------- 渲染 ----------
+const TEARS = `<svg class="tear" viewBox="0 0 40 40"><path d="M12 4 C5 15 5 23 12 23 C19 23 19 15 12 4Z" fill="#7cc4ff" stroke="#d6168f" stroke-width="1.6"/><path d="M30 16 C25 24 25 29 30 29 C35 29 35 24 30 16Z" fill="#7cc4ff" stroke="#d6168f" stroke-width="1.6"/></svg>`;
+const pigArt = (p, i) => IMG(i % 2 ? 'pig_2' : 'pig_1') + (hungry(p) ? TEARS : '');
+
+function renderHeader() {
+  if (!holdMoney) shownMoney = S.money;
+  $('money').textContent = shownMoney;
+  $('date').textContent = dateStr();
+  $('pid').textContent = S.id;
+  $('feed').textContent = S.feed;
+  const done = S.claimedDay === S.day, b = $('claim');
+  b.disabled = done;
+  b.textContent = done ? '今天已领取 ✓' : `领取今日收入 ${incomeToday()}¥`;
+}
+
+function renderFarm() {
+  const now = performance.now();
+  $('pens').innerHTML = S.pigs.map((p, i) => {
+    const locked = i >= slotsOpen();
+    if (locked || !p) {
+      return `<div class="pen empty"><div class="sign dashed">${locked ? '未解锁' : '空猪位'}</div>
+        <div class="pigbox"><div class="pig">${IMG('pig_locked')}</div></div>
+        ${locked ? IMG('label_locked', 'lab') : `<div class="nm">猪猪${'①②③'[i]}</div>`}<div class="tag"></div>
+        <div class="hbar skb dashed"></div><button class="imgbtn dim" disabled>${IMG('btn_feed')}</button></div>`;
+    }
+    const h = hungry(p), cycle = h ? .7 : 2.4;
+    const delay = -(((now / 1000) + i * .7) % cycle).toFixed(2);
+    return `<div class="pen ${p.rare ? 'rare' : ''}">
+      <div class="sign skb">寿命：${p.life}天</div>
+      <div class="pigbox"><div class="pig" data-pig="${i}">${IMG(h ? 'trough_empty' : 'trough_full', 'trough')}<div class="pigwob ${h ? 'sob' : ''}" style="animation-delay:${delay}s">${pigArt(p, i)}</div></div></div>
+      <div class="nm">猪猪${'①②③'[i]}</div>
+      <div class="tag">${p.rare ? '★稀有 +150/天' : '普通 +50/天'}</div>
+      <div class="hbar skb ${h ? 'low' : ''}"><i style="width:${p.hunger}%"></i></div>
+      <div class="hlab">${h ? '饿饿…' : '饱饱'} ${p.hunger}%</div>
+      <button class="imgbtn" data-feed="${i}">${IMG('btn_feed')}</button>
+      <button class="feedbtn sellbtn skb ${sellArm === i ? 'arm' : ''}" data-sell="${i}">${sellArm === i ? '再点一次确认' : `卖出 ¥${sellPrice(p)}`}</button></div>`;
+  }).join('');
+}
+
+function renderShop() {
+  const hasSlot = S.pigs.some((p, i) => !p && i < slotsOpen());
+  const buyBtn = (key, dim) => `<button class="imgbtn buy ${dim ? 'dim' : ''}" data-buy="${key}">${IMG('btn_buy')}</button>`;
+  const card = (key, name, pic, btn, cls) => `<div class="item ${cls}">
+    <div class="art">${IMG(pic)}</div><div>${name}</div>
+    <div class="old">¥${CONFIG.OLD_PRICE[key]}</div><div class="price">${CONFIG.PRICE[key]}</div>${btn}</div>`;
+  $('shop').innerHTML =
+    card('pig', '猪猪（普通）', 'pig_shop', buyBtn('pig', !hasSlot), 'sk') +
+    card('feed', '饲料', 'feed_bag', buyBtn('feed'), 'sk2') +
+    card('pen', '猪圈', 'pigsty', S.penUnlocked ? '<div class="owned">已拥有</div>' : buyBtn('pen'), 'sk2') +
+    `<div class="item mystery sk"><div class="art">${IMG('item_mystery')}</div><div>？？？</div>
+      <div class="old">&nbsp;</div><div class="price">300</div><div class="soon">敬请期待</div></div>`;
+}
+
+function render() { renderHeader(); renderFarm(); renderShop(); renderMachine(); }
+
+// ---------- 猪猪机 ----------
+const M = { busy: false, phase: 0, alert: null };
+const MPIGS = ['pig_m_center', 'pig_m_right', 'pig_m_jump', 'pig_m_flip_left', 'pig_m_flip_right'];
+const RAIL = 26, CLAW_W = 62, HEAD_H = CLAW_W * 330 / 175;   // 与 CSS 的 --rail / #claw .cl 宽度、claw.png 比例保持一致
+const NPIGS = 6;
+const ease = { io: k => k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2, in: k => k * k, out: k => 1 - (1 - k) * (1 - k),
+  bounce: k => { const n = 7.5625, d = 2.75; if (k < 1 / d) return n * k * k; if (k < 2 / d) return n * (k -= 1.5 / d) * k + .75;
+    if (k < 2.5 / d) return n * (k -= 2.25 / d) * k + .9375; return n * (k -= 2.625 / d) * k + .984375; } };
+const wait = ms => new Promise(r => setTimeout(r, ms));
+function tween(ms, fn, e = ease.io) {
+  return new Promise(res => {
+    const t0 = performance.now();
+    (function step(now) {
+      const k = Math.min(1, (now - t0) / ms);
+      fn(e(k), k);
+      k < 1 ? requestAnimationFrame(step) : res();
+    })(t0);
+  });
+}
+
+// 6 只猪分前后两层，大小 ±15%、旋转 ±20° 随机（页面加载时生成一次）
+function makeLayout() {
+  const rnd = (lo, hi) => lo + Math.random() * (hi - lo);
+  const back = [.15, .45, .76], front = [.30, .62, .87];
+  return [...back.map(fx => ({ fx, layer: 0 })), ...front.map(fx => ({ fx, layer: 1 }))]
+    .map(o => ({ ...o, fx: o.fx + rnd(-.025, .025), scale: rnd(.85, 1.15), rot: rnd(-20, 20), dy: rnd(-1, 1), img: MPIGS[Math.floor(Math.random() * MPIGS.length)] }));
+}
+M.layout = makeLayout();
+
+function buildMachinePigs() {
+  const glass = $('glass');
+  glass.querySelectorAll('.mpig').forEach(e => e.remove());
+  M.layout.forEach((L, i) => {
+    const d = document.createElement('div');
+    d.className = 'mpig' + (L.fx > .6 ? ' bl' : ''); d.dataset.i = i;
+    d.style.left = (L.fx * 100) + '%';
+    d.style.bottom = (L.layer ? 1 + L.dy : 9 + L.dy) + '%';
+    d.style.zIndex = L.layer ? 2 : 1;
+    d.innerHTML = `<div class="rot" style="transform:rotate(${L.rot}deg)">${IMG(L.img, 'n')}${IMG('pig_alert', 'a')}${IMG('bubble_alert', 'bub')}</div>`;
+    glass.appendChild(d);
+  });
+}
+
+function glassGeo() {
+  const r = $('glass').getBoundingClientRect();
+  const pw = r.width * CONFIG.MACHINE_PIG_WIDTH;  // 基准猪宽，每只再乘自己的 scale
+  document.querySelectorAll('.mpig').forEach(e => e.style.setProperty('--pw', pw * M.layout[+e.dataset.i].scale + 'px'));
+  return { r, W: r.width, H: r.height, pw, cx: i => r.left + r.width * M.layout[i].fx,
+           x: t => r.left + r.width * (.06 + .88 * t),
+           pig: i => { const b = document.querySelector(`.mpig[data-i="${i}"]`).getBoundingClientRect();
+                       return { pw: pw * M.layout[i].scale, h: b.height, top: b.top, rot: M.layout[i].rot, img: M.layout[i].img }; } };
+}
+const tri = ph => ph <= 1 ? ph : 2 - ph;
+const ROPE0 = 10;
+function setClaw(g, xvp, Y) {
+  const c = $('claw');
+  c.style.transform = `translateX(${xvp - g.r.left}px)`;
+  c.querySelector('.rope').style.height = (Y + HEAD_H * .1) + 'px';   // 绳子接到 claw.png 裁掉顶部杂点后的位置
+  c.querySelector('.cl').style.top = Y + 'px';
+}
+function placeClone(cl, g, xvp, Y) {
+  cl.style.left = (xvp - cl._pw / 2) + 'px';
+  cl.style.top = (g.r.top + RAIL + Y + HEAD_H - cl._h * .35) + 'px';
+}
+function makeClone(P, rare) {
+  const cl = document.createElement('div');
+  cl._pw = P.pw; cl._h = P.h;
+  cl.className = 'cpig'; cl.style.setProperty('--pw', P.pw + 'px');
+  cl.innerHTML = `<div class="${rare ? 'rare-f' : ''}"><div style="transform:rotate(${P.rot}deg)">${IMG(P.img)}</div></div>`;
+  document.body.appendChild(cl);
+  return cl;
+}
+
+function renderMachine() {
+  $('knobs').classList.toggle('off', M.busy || S.money < CONFIG.PLAY_COST);
+  const n = S.missStreak;
+  $('mInfo').innerHTML = `¥${CONFIG.PLAY_COST} / 次<br>` + (n >= CONFIG.PITY_AFTER ? '<b>下次必中！</b>' : `保底 ${n}/${CONFIG.PITY_AFTER}`);
+}
+
+function loop(now) {
+  requestAnimationFrame(loop);
+  const dt = Math.min(.1, (now - (loop.last || now)) / 1000); loop.last = now;
+  if (M.busy || !$('page-machine').classList.contains('active')) return;
+  M.phase = (M.phase + dt / CONFIG.CLAW_SWEEP_SECONDS) % 2;
+  const g = glassGeo();
+  const x = g.x(tri(M.phase));
+  setClaw(g, x, ROPE0);
+  // 爪子正对着的那只（落在"偏一点"以内）换成受惊的猪并显示气泡
+  let near = -1, nd = Infinity;
+  for (let i = 0; i < NPIGS; i++) { const d = Math.abs(x - g.cx(i)); if (d < nd) { nd = d; near = i; } }
+  const on = nd < g.pw * M.layout[near].scale / 2 ? near : -1;
+  if (on !== M.alert) {
+    M.alert = on;
+    document.querySelectorAll('.mpig').forEach(e => e.classList.toggle('alert', +e.dataset.i === on));
+  }
+}
+
+function addPig(rare) {
+  const slot = S.pigs.findIndex((p, i) => !p && i < slotsOpen());
+  if (slot < 0) return false;
+  S.pigs[slot] = { life: rare ? CONFIG.RARE_LIFE : CONFIG.NORMAL_LIFE, rare, hunger: 100 };
+  return true;
+}
+
+// 不管中途出什么问题，都把爪子/猪恢复到待机状态，避免卡死不再摆动
+async function play() {
+  if (M.busy) return;
+  try { await playRound(); }
+  catch (e) { console.error(e); }
+  finally {
+    M.busy = false; M.alert = null;
+    $('claw').classList.remove('closed');
+    document.querySelectorAll('.cpig').forEach(e => e.remove());
+    document.querySelectorAll('.mpig').forEach(e => { e.style.visibility = ''; });
+    render();
+  }
+}
+
+async function playRound() {
+  if (S.money < CONFIG.PLAY_COST) { shake($('knobs')); return toast('金币不够'); }
+
+  // 付钱、定格爪子
+  S.money -= CONFIG.PLAY_COST; save();
+  M.busy = true; render();
+  floatAt($('moneyBox'), `-${CONFIG.PLAY_COST}`, 'neg'); bump($('moneyBox'));
+  const g = glassGeo();
+  const x0 = g.x(tri(M.phase));
+
+  // 判定
+  let best = 0, bd = Infinity;
+  for (let i = 0; i < NPIGS; i++) { const d = Math.abs(x0 - g.cx(i)); if (d < bd) { bd = d; best = i; } }
+  const R = CONFIG.HIT_RATE;
+  const P = g.pig(best);
+  const rate = bd < P.pw / 4 ? R.center : bd < P.pw / 2 ? R.near : R.far;
+  const hit = S.missStreak >= CONFIG.PITY_AFTER || Math.random() < rate;
+  const rare = hit && Math.random() < CONFIG.RARE_RATE;
+  const grabs = hit || rate > 0;                  // 爪子下面有猪才会抓起来
+  const pigEl = document.querySelector(`.mpig[data-i="${best}"]`);
+  const claw = $('claw');
+  const xt = g.cx(best);
+  const Yt = Math.max(ROPE0, P.top - g.r.top + P.h * .35 - RAIL - HEAD_H);
+
+  // 下落（必中时爪子会往猪的位置吸过去）
+  let x = x0;
+  await tween(750, k => { x = hit ? x0 + (xt - x0) * k : x0; setClaw(g, x, ROPE0 + (Yt - ROPE0) * k); });
+  claw.classList.add('closed'); await wait(300);
+
+  let clone = null;
+  if (grabs) {
+    clone = makeClone(P, rare);
+    pigEl.style.visibility = 'hidden';
+    placeClone(clone, g, x, Yt);
+  }
+  const up = (from, to, ms) => tween(ms, k => { const Y = from + (to - from) * k; setClaw(g, x, Y); if (clone) placeClone(clone, g, x, Y); });
+
+  if (hit) {
+    await up(Yt, ROPE0, 750);
+    const xr = g.r.right - P.pw * .7, xs = x;
+    await tween(850, k => { x = xs + (xr - xs) * k; setClaw(g, x, ROPE0); placeClone(clone, g, x, ROPE0); });
+    claw.classList.remove('closed');
+    const s0 = { l: parseFloat(clone.style.left), t: parseFloat(clone.style.top) };
+    const sb = $('slotBox').getBoundingClientRect();
+    const tl = sb.left + sb.width / 2 - P.pw / 2, tt = sb.top + sb.height / 2 - P.h / 2;
+    await tween(650, k => {
+      clone.style.left = (s0.l + (tl - s0.l) * k) + 'px'; clone.style.top = (s0.t + (tt - s0.t) * k) + 'px';
+      clone.style.transform = `scale(${1 - .45 * k})`; clone.style.opacity = k > .85 ? 1 - (k - .85) / .15 : 1;
+    }, ease.in);
+    clone.remove();
+    S.missStreak = 0;
+    const placed = addPig(rare);
+    if (!placed) S.money += CONFIG.SELL_PRICE;
+    save(); render();
+    const sub = placed ? '已送进养殖场' : `没有空位，自动卖出 +${CONFIG.SELL_PRICE}`;
+    const pop = $('popup');
+    pop.innerHTML = `抓到了！<div class="pp"><div class="${rare ? 'rare-f' : ''}">${IMG(P.img)}</div></div><div class="sub">${rare ? '★稀有猪！' : '普通猪'} ${sub}</div>`;
+    pop.classList.add('show');
+    toast(placed ? (rare ? '稀有猪入住养殖场 ★' : '新猪猪入住养殖场') : `养殖场没空位，已按 ${CONFIG.SELL_PRICE} 卖出`);
+    if (!placed) { floatAt($('moneyBox'), `+${CONFIG.SELL_PRICE}`); bump($('moneyBox')); }
+    pigEl.style.visibility = ''; pigEl.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 600, delay: 300, fill: 'backwards' });
+    setTimeout(() => pop.classList.remove('show'), 1900);
+  } else {
+    if (grabs) {
+      const mid = Yt - (Yt - ROPE0) * .4;
+      await up(Yt, mid, 320);
+      claw.classList.remove('closed');
+      // 猪在半空滑落回去（脱离爪子，单独掉落）
+      const fall = clone; clone = null;
+      const a = { l: parseFloat(fall.style.left), t: parseFloat(fall.style.top) };
+      const pr = pigEl.getBoundingClientRect();
+      const slip = tween(520, k => { fall.style.top = (a.t + (pr.top - a.t) * k) + 'px'; fall.style.left = (a.l + (pr.left - a.l) * k) + 'px';
+        fall.style.transform = `rotate(${Math.sin(k * 9) * 14 * (1 - k)}deg)`; }, ease.bounce);
+      await Promise.all([slip, up(mid, ROPE0, 520)]);
+      fall.remove(); pigEl.style.visibility = '';
+    } else {
+      claw.classList.remove('closed');
+      await up(Yt, ROPE0, 750);
+    }
+    S.missStreak++;
+    S.feed++; save(); render();
+    toast('没抓到，送你 1 包饲料');
+    // 出猪口掉出一包饲料
+    const sb = $('slotBox').getBoundingClientRect();
+    const bag = document.createElement('div');
+    bag.className = 'float'; bag.style.cssText = `left:${sb.left + sb.width / 2}px; top:${sb.top - 6}px; font-size:34px; z-index:60`;
+    bag.innerHTML = IMG('feed_bag').replace('<img ', '<img style="height:40px" ');
+    document.body.appendChild(bag);
+    bag.animate([{ transform: 'translate(-50%,-30px) scale(.3)', opacity: 0 }, { transform: 'translate(-50%,-30px) scale(1)', opacity: 1, offset: .2 },
+                 { transform: 'translate(-50%,6px) scale(1)', opacity: 1, offset: .55 }, { transform: 'translate(-50%,-6px) scale(1)', opacity: 1, offset: .7 },
+                 { transform: 'translate(-50%,0) scale(1)', opacity: 1, offset: .85 }, { transform: 'translate(-50%,0) scale(1)', opacity: 0 }],
+                { duration: 1500 }).onfinish = () => bag.remove();
+    floatAt($('slotBox'), '+1 饲料');
+  }
+
+  // 爪子回到摆动轨迹上
+  M.phase = Math.min(.99, Math.max(.01, (x - g.r.left - g.W * .06) / (g.W * .88)));
+  M.alert = null; M.busy = false; render();
+}
+
+// ---------- 事件 ----------
+document.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (b) {
+    if (b.dataset.tab) {
+      if (M.busy) return toast('抓猪中…');
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t === b));
+      document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + b.dataset.tab));
+    } else if (b.dataset.feed !== undefined) feedPig(+b.dataset.feed, b);
+    else if (b.dataset.sell !== undefined) sellPig(+b.dataset.sell);
+    else if (b.dataset.buy) buy(b.dataset.buy, b);
+    else if (b.id === 'claim') claim();
+    else if (b.id === 'grab') play();
+    else if (b.dataset.dev === 'tick') { S.lastTick -= TICK_MS; if (processTicks()) { save(); render(); } }
+    else if (b.dataset.dev === 'day') { advanceDays(1); save(); render(); toast('过了一天'); }
+    else if (b.dataset.dev === 'reset') { if (confirm('确定重新开始吗？')) { S = newState(); shownMoney = S.money; save(); render(); } }
+    return;
+  }
+  const pig = e.target.closest('[data-pig]');
+  if (pig) {
+    jump(pig);
+    if (hungry(S.pigs[+pig.dataset.pig])) toast('猪猪饿了…');
+  }
+});
+
+setInterval(() => { if (processTicks()) { save(); render(); } }, 1000);
+
+buildMachinePigs();
+requestAnimationFrame(loop);
+catchUpDays();
+processTicks();
+save();
+render();
+</script>
+</body>
+</html>
